@@ -25,9 +25,8 @@ namespace MemoryFileConnectionUtility
 
     public class TargetMemoryFileWithMutex
     {
-
         public string m_fileName = "";
-        public int m_maxMemorySize = 1000000;
+        public int m_maxMemorySize = MemoryFileConnectionUtility._1MOSize;
         public bool m_created;
         public MemoryMappedFile m_memoryFile;
         public Mutex m_memoryFileMutex;
@@ -38,7 +37,7 @@ namespace MemoryFileConnectionUtility
         public TargetMemoryFileWithMutex(TargetMemoryFileWithMutexInfoWithFormat init) : this(init.m_fileName, init.m_mutexFormatId, init.m_maxMemorySize)
         { }
 
-        public TargetMemoryFileWithMutex(string fileName, int maxMemorySize = 1000000)
+        public TargetMemoryFileWithMutex(string fileName, int maxMemorySize = MemoryFileConnectionUtility._1MOSize)
         {
             m_fileName = fileName;
             m_maxMemorySize = maxMemorySize;
@@ -47,7 +46,7 @@ namespace MemoryFileConnectionUtility
             m_memoryFile = MemoryMappedFile.CreateOrOpen(fileName, maxMemorySize);
             m_memoryFileMutex = new Mutex(false, mutexId, out m_created);
         }
-        public TargetMemoryFileWithMutex(string fileName, string fileNameSpecificFormat, int maxMemorySize = 1000000)
+        public TargetMemoryFileWithMutex(string fileName, string fileNameSpecificFormat, int maxMemorySize = MemoryFileConnectionUtility._1MOSize)
         {
             m_fileName = fileName;
             m_maxMemorySize = maxMemorySize;
@@ -97,8 +96,6 @@ namespace MemoryFileConnectionUtility
 
         private void MutexResetMemory()
         {
-
-
             using (MemoryMappedViewStream stream = m_memoryFile.CreateViewStream())
             {
                 BinaryWriter writer = new BinaryWriter(stream);

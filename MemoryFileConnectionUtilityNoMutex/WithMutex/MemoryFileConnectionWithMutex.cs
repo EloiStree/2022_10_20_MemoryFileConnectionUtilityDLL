@@ -6,12 +6,19 @@ using System.Threading.Tasks;
 
 namespace MemoryFileConnectionUtility
 {
-
     [System.Serializable]
-    public class MemoryFileConnection
+    public class MemoryFileConnectionWithMutex
     {
         public TargetMemoryFileWithMutexInfoWithFormat m_setupInfo= new TargetMemoryFileWithMutexInfoWithFormat();
         private TargetMemoryFileWithMutex m_connection;
+
+        public MemoryFileConnectionWithMutex() { m_connection = new TargetMemoryFileWithMutex(m_setupInfo); }
+        public MemoryFileConnectionWithMutex(string fileName, int maxSize)
+        {
+            m_setupInfo.m_fileName = fileName;
+            m_setupInfo.m_maxMemorySize = maxSize;
+            m_connection = new TargetMemoryFileWithMutex(m_setupInfo);
+        }
 
         public void CheckThatConnectionExist()
         {

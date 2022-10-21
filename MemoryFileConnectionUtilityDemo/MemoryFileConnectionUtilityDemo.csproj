@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MemoryFileConnectionTool\MemoryFileConnectionTool.csproj" />
+    <ProjectReference Include="..\MemoryFileConnectionUtilityNoMutex\MemoryFileConnectionUtilityNoMutex.csproj" />
   </ItemGroup>
 
 </Project>
