@@ -1,77 +1,98 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using System.IO.MemoryMappedFiles;
-using System.Security.AccessControl;
-using System.Security.Principal;
 using System.Threading;
 
 namespace MemoryFileConnectionUtility
 {
-    [System.Serializable]
-    public class TargetMemoryFileInitation
+    public class MemoryFileConnectionWithMutexLocker : IMemoryFileConnectionSetGet
     {
         public string m_fileName = "";
-        public int m_maxMemorySize = 1000000;
-    }
-
-
-    public class TargetMemoryFileWithNoMutex
-    {
-
-        public string m_fileName = "";
-        public int m_maxMemorySize = 1000000;
+        public int m_maxMemorySize = MemoryFileConnectionUtility._1MOSize;
         public bool m_created;
         public MemoryMappedFile m_memoryFile;
+        public Mutex m_memoryFileMutex;
+        public string m_mutexFormatId = "Global\\{{{0}}}mutex";
 
-        public TargetMemoryFileWithNoMutex(TargetMemoryFileInitation init) : this(init.m_fileName, init.m_maxMemorySize)
+        public MemoryFileConnectionWithMutexLocker(TargetMemoryFileWithMutexInfo init) : this(init.m_fileName, init.m_maxMemorySize)
+        { }
+        public MemoryFileConnectionWithMutexLocker(TargetMemoryFileWithMutexInfoWithFormat init) : this(init.m_fileName, init.m_mutexFormatId, init.m_maxMemorySize)
         { }
 
-
-        public TargetMemoryFileWithNoMutex(string fileName, int maxMemorySize = 1000000)
+        public MemoryFileConnectionWithMutexLocker(string fileName, int maxMemorySize = MemoryFileConnectionUtility._1MOSize)
         {
-            m_fileName = fileName;
-            m_maxMemorySize = maxMemorySize;
-            m_memoryFile = MemoryMappedFile.CreateOrOpen(fileName, maxMemorySize);
-            m_created = true;
+
+            SetWithNameAndSize(fileName, maxMemorySize);
+        }
+        public MemoryFileConnectionWithMutexLocker(string fileName, string fileNameSpecificFormat, int maxMemorySize = MemoryFileConnectionUtility._1MOSize)
+        {
+            SetWithNameAndSize(fileName, maxMemorySize);
+             m_mutexFormatId = fileNameSpecificFormat;
+        }
+
+
+        public void SetWithNameAndSize(string name, int size)
+        {
+            m_fileName = name;
+            m_maxMemorySize = size;
+            string mutexId = string.Format(m_mutexFormatId, name);
+            //m_memoryFileMutex = new Mutex(false, mutexId, out createdNew, securitySettings);
+            m_memoryFile = MemoryMappedFile.CreateOrOpen(name, size);
+            m_memoryFileMutex = new Mutex(false, mutexId, out m_created);
+        }
+
+        public void SetName(string name)
+        {
+            SetWithNameAndSize(name, m_maxMemorySize);
+        }
+
+        public void SetMemorySize(int sizeInBit)
+        {
+            SetWithNameAndSize(m_fileName, sizeInBit);
+        }
+
+        public void SetMemorySizeTo1MO()
+        {
+            SetMemorySize(MemoryFileConnectionUtility._1MOSize);
+        }
+
+        public void SetMemorySizeTo1KO()
+        {
+            SetMemorySize(MemoryFileConnectionUtility._1KOSize);
         }
 
 
         public delegate void DoWhenFileNotUsed();
         public void WaitUntilMutexAllowIt(DoWhenFileNotUsed todo)
         {
-            if (todo == null)
-                return;
-            bool executed = false;
-            int antiLoop=0;
-            while (!executed)
+
+            var hasHandle = false;
+            try
             {
-                //Should be done with Mutex but hey are not supported in IL2CPP
                 try
                 {
-                    if (todo != null)
-                        todo();
-                    executed = true;
+
+                    // mutex.WaitOne(Timeout.Infinite, false);
+                    hasHandle = m_memoryFileMutex.WaitOne(5000, false);
+                    if (hasHandle == false)
+                        throw new TimeoutException("Timeout waiting for exclusive access");
                 }
-                catch (Exception)
+                catch (AbandonedMutexException)
                 {
-                    executed = false;
-                    Thread.Sleep(5);
+                    hasHandle = true;
                 }
-                antiLoop++;
-                if (antiLoop > 50000)
-                    break;
+                todo();
             }
+            finally
+            {
+                if (hasHandle)
+                    m_memoryFileMutex.ReleaseMutex();
+            }
+
         }
 
-
-
-
-
-        public void ResetMemory()
+        public void ResetToEmpty()
         {
 
             WaitUntilMutexAllowIt(MutexResetMemory);
@@ -80,8 +101,6 @@ namespace MemoryFileConnectionUtility
 
         private void MutexResetMemory()
         {
-
-
             using (MemoryMappedViewStream stream = m_memoryFile.CreateViewStream())
             {
                 BinaryWriter writer = new BinaryWriter(stream);
@@ -105,6 +124,7 @@ namespace MemoryFileConnectionUtility
             {
                 MutexAppendText(textToAdd);
             });
+
         }
 
 
@@ -115,7 +135,7 @@ namespace MemoryFileConnectionUtility
             using (MemoryMappedViewStream stream = m_memoryFile.CreateViewStream())
             {
 
-                MutexTextRecovering(out readText, false);
+                MutexGetAsText(out readText, false);
 
                 BinaryWriter writer = new BinaryWriter(stream);
                 string nexText = readText + textToAdd;
@@ -146,7 +166,8 @@ namespace MemoryFileConnectionUtility
             string readText;
             using (MemoryMappedViewStream stream = m_memoryFile.CreateViewStream())
             {
-                MutexTextRecovering(out readText, false);
+
+                MutexGetAsText(out readText, false);
 
                 BinaryWriter writer = new BinaryWriter(stream);
                 string nexText = textToAdd + readText;
@@ -162,15 +183,15 @@ namespace MemoryFileConnectionUtility
         }
 
 
-        public void SetText(string text)
+        public void SetAsText(string text)
         {
             WaitUntilMutexAllowIt(() =>
             {
-                MutexSetText(text);
+                MutexSetAsText(text);
             });
 
         }
-        private void MutexSetText(string text)
+        private void MutexSetAsText(string text)
         {
 
             using (MemoryMappedViewStream stream = m_memoryFile.CreateViewStream())
@@ -194,19 +215,18 @@ namespace MemoryFileConnectionUtility
 
         }
 
-        public void TextRecovering(out string readText, bool removeContentAfter = true)
+        public void GetAsText(out string readText, bool removeContentAfter = false)
         {
 
             string textFound = "";
-            WaitUntilMutexAllowIt(() =>
-            {
-                MutexTextRecovering(out textFound, removeContentAfter);
+            WaitUntilMutexAllowIt(() => {
+                MutexGetAsText(out textFound, removeContentAfter);
             });
             readText = textFound;
 
         }
 
-        private void MutexTextRecovering(out string readText, bool directremove = true)
+        private void MutexGetAsText(out string readText, bool removeContentAfter = false)
         {
             readText = "";
 
@@ -224,7 +244,7 @@ namespace MemoryFileConnectionUtility
 
                 readText = strb.ToString();
 
-                if (directremove)
+                if (removeContentAfter)
                 {
                     MutexResetMemory();
                 }
@@ -264,25 +284,24 @@ namespace MemoryFileConnectionUtility
         }
 
 
-        public void BytesRecovering(out byte[] bytes, bool removeContentAfter = true)
+        public void GetAsBytes(out byte[] bytes, bool removeContentAfter = false)
         {
             byte[] b = new byte[0];
-            WaitUntilMutexAllowIt(() =>
-            {
-                MutexBytesRecovering(out b, removeContentAfter);
+            WaitUntilMutexAllowIt(() => {
+                MutexGetAsBytes(out b, removeContentAfter);
             });
             bytes = b;
 
         }
 
-        private void MutexBytesRecovering(out byte[] bytes, bool directremove = true)
+        private void MutexGetAsBytes(out byte[] bytes, bool removeContentAfter = false)
         {
             bytes = null;
             using (MemoryMappedViewStream stream = m_memoryFile.CreateViewStream())
             {
                 BinaryReader reader = new BinaryReader(stream);
                 bytes = ReadAllBytes(reader);
-                if (directremove)
+                if (removeContentAfter)
                 {
                     MutexResetMemory();
                 }
@@ -309,5 +328,15 @@ namespace MemoryFileConnectionUtility
             return result;
         }
 
+       
+
+        public void Dispose()
+        {
+            m_memoryFile.Dispose();
+            m_memoryFileMutex.Dispose();
+        }
     }
+
+
+
 }

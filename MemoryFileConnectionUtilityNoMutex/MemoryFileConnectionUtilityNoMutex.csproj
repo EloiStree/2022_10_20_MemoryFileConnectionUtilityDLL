@@ -41,11 +41,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MemoryFileConnectionUtility.cs" />
+    <Compile Include="Intefaces\IMemoryMapFileInitInfo.cs" />
+    <Compile Include="Intefaces\MemoryFileConnectionFacade.cs" />
+    <Compile Include="Utility\MemoryFileConnectionUtility.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="NoMutex\MemoryFileConnectionNoMutexLocker.cs" />
-    <Compile Include="NoMutex\TargetMemoryFileWithNoMutex.cs" />
-    <Compile Include="WithMutex\MemoryFileConnectionWithMutex.cs" />
+    <Compile Include="NoMutex\MemoryFileConnectionNoMutexWithFileLocker.cs" />
+    <Compile Include="NoMutex\MemoryFileConnectionNoMutex.cs" />
+    <Compile Include="Intefaces\IMemoryFileConnectionSetGet.cs" />
+    <Compile Include="WithMutex\MemoryFileConnectionWithMutexLocker.cs" />
     <Compile Include="WithMutex\TargetMemoryFileWithMutexInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -15,24 +15,21 @@ namespace MemoryFileConnectionUtilityDemo
 
         static void Main(string[] args)
         {
-            int mode = 1;
+            int mode = 4;
 
             if (mode == 0)
             {
 
                 string toPush = "Hello World !";
 
-                MemoryFileConnectionWithMutex connectionPush = new MemoryFileConnectionWithMutex();
-                connectionPush.SetNameAndSizeThenReset("Test1", 100000);
-
-                MemoryFileConnectionWithMutex connectionRecovert = new MemoryFileConnectionWithMutex();
-                connectionRecovert.SetNameAndSizeThenReset("Test1", 100000);
+                IMemoryFileConnectionSetGet connectionPush = new MemoryFileConnectionWithMutexLocker("Test1", 100000);
+                IMemoryFileConnectionSetGet connectionRecovert = new MemoryFileConnectionWithMutexLocker("Test1", 100000);
 
 
                 Console.WriteLine("Push: " + toPush);
-                connectionPush.SetText(toPush);
+                connectionPush.SetAsText(toPush);
 
-                connectionRecovert.GetAsText(out string t);
+                connectionRecovert.GetAsText(out string t, false);
                 Console.WriteLine("Recovert: " + t);
 
                 while (true)
@@ -40,9 +37,9 @@ namespace MemoryFileConnectionUtilityDemo
                     toPush = Console.ReadLine();
 
                     Console.WriteLine("Push: " + toPush);
-                    connectionPush.SetText(toPush);
+                    connectionPush.SetAsText(toPush);
 
-                    connectionRecovert.GetAsText(out string tt);
+                    connectionRecovert.GetAsText(out string tt, false);
                     Console.WriteLine("Recovert: " + tt);
                 }
             }
@@ -62,6 +59,19 @@ namespace MemoryFileConnectionUtilityDemo
                 //(new Thread(new ThreadStart(() => PushRandomText(50)))).Start();
                 (new Thread(new ThreadStart(() => ReadRandomTextMutex(1)))).Start();
             }
+            else if (mode == 4)
+            {
+                MemoryFileConnectionFacade.CreateConnection(MemoryFileConnectionType.MemoryFileLocker,
+                    "6c9a793d-b160-4228-aa63-87e6b6c18e0a", out IMemoryFileConnectionSetGet connect, 1000000);
+                while (true) {
+
+                    connect.GetAsText(out string text, false);
+                    Console.WriteLine(text);
+                    Thread.Sleep(1000);
+                }
+
+            }
+
         }
 
 
@@ -69,13 +79,13 @@ namespace MemoryFileConnectionUtilityDemo
         private static void PushRandomText( int millisecond = 1)
         {
             int max = int.MaxValue;
-            MemoryFileConnectionNoMutexLocker connectionPush = new MemoryFileConnectionNoMutexLocker("Test1", 100000);
+            IMemoryFileConnectionSetGet connectionPush = new MemoryFileConnectionNoMutexWithFileLocker("Test1", 100000);
             while (max>0)
             {
 
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
-                connectionPush.SetText(DateTime.Now.ToString());
+                connectionPush.SetAsText(DateTime.Now.ToString());
                 watch.Stop();
                 Console.WriteLine("Write: " + watch.ElapsedMilliseconds) ;
                 Thread.Sleep(millisecond);
@@ -86,14 +96,14 @@ namespace MemoryFileConnectionUtilityDemo
         {
 
             int max = int.MaxValue;
-            MemoryFileConnectionNoMutexLocker connectionRecovert = new MemoryFileConnectionNoMutexLocker("Test1", 100000);
+            IMemoryFileConnectionSetGet connectionRecovert = new MemoryFileConnectionNoMutexWithFileLocker("Test1", 100000);
            
             while (max > 0)
             {
                 m_index++;
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
-                connectionRecovert.TextRecovering(out string t,false);
+                connectionRecovert.GetAsText(out string t,false);
               
 
                 watch.Stop(); 
@@ -112,13 +122,13 @@ namespace MemoryFileConnectionUtilityDemo
         private static void PushRandomTextMutex(int millisecond = 1)
         {
             int max = int.MaxValue;
-            MemoryFileConnectionWithMutex connectionPush = new MemoryFileConnectionWithMutex("Test1", 100000);
+            IMemoryFileConnectionSetGet connectionPush = new MemoryFileConnectionWithMutexLocker("Test1", 100000);
             while (max > 0)
             {
 
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
-                connectionPush.SetText(DateTime.Now.ToString());
+                connectionPush.SetAsText(DateTime.Now.ToString());
                 watch.Stop();
                 Console.WriteLine("Write: " + watch.ElapsedMilliseconds);
                 Thread.Sleep(millisecond);
@@ -129,14 +139,14 @@ namespace MemoryFileConnectionUtilityDemo
         {
 
             int max = int.MaxValue;
-            MemoryFileConnectionWithMutex connectionRecovert = new MemoryFileConnectionWithMutex("Test1", 100000);
+            IMemoryFileConnectionSetGet connectionRecovert = new MemoryFileConnectionWithMutexLocker("Test1", 100000);
 
             while (max > 0)
             {
                 m_index++;
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
-                connectionRecovert.GetAsTextAndFlush(out string t);
+                connectionRecovert.GetAsText(out string t, false);
                 watch.Stop(); 
                 if (t.Trim().Length == 0)
                 {

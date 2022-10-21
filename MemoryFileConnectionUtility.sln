@@ -5,8 +5,6 @@ VisualStudioVersion = 16.0.32228.343
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MemoryFileConnectionUtilityDemo", "MemoryFileConnectionUtilityDemo\MemoryFileConnectionUtilityDemo.csproj", "{246E3882-97C5-416F-91BB-F52B98834929}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MemoryFileConnectionUtility", "MemoryFileConnectionTool\MemoryFileConnectionUtility.csproj", "{032A3530-2561-460B-B6E2-D84EE1A547B2}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MemoryFileConnectionUtilityNoMutex", "MemoryFileConnectionUtilityNoMutex\MemoryFileConnectionUtilityNoMutex.csproj", "{75A2C6D8-CAF9-4D72-A217-8BF127D94FA5}"
 EndProject
 Global
@@ -19,10 +17,6 @@ Global
 		{246E3882-97C5-416F-91BB-F52B98834929}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{246E3882-97C5-416F-91BB-F52B98834929}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{246E3882-97C5-416F-91BB-F52B98834929}.Release|Any CPU.Build.0 = Release|Any CPU
-		{032A3530-2561-460B-B6E2-D84EE1A547B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{032A3530-2561-460B-B6E2-D84EE1A547B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{032A3530-2561-460B-B6E2-D84EE1A547B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{032A3530-2561-460B-B6E2-D84EE1A547B2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{75A2C6D8-CAF9-4D72-A217-8BF127D94FA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{75A2C6D8-CAF9-4D72-A217-8BF127D94FA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{75A2C6D8-CAF9-4D72-A217-8BF127D94FA5}.Release|Any CPU.ActiveCfg = Release|Any CPU

@@ -9,21 +9,51 @@ using System.Threading.Tasks;
 
 namespace MemoryFileConnectionUtility
 {
-   public class MemoryFileConnectionNoMutexLocker
+   public class MemoryFileConnectionNoMutexWithFileLocker : IMemoryFileConnectionSetGet
     {
         public const int LOCKSIZE= 1;
-        public TargetMemoryFileWithNoMutex m_memoryFile;
+        public MemoryFileConnectionNoMutex m_memoryFile;
         public MemoryMappedFile m_locker;
         public string m_filenameLock;
         public string m_filenameValue;
+        private TargetMemoryFileInitation m_paramsInit;
 
-        public MemoryFileConnectionNoMutexLocker(string fileName, int fileSize = MemoryFileConnectionUtility._1MOSize )
+        public MemoryFileConnectionNoMutexWithFileLocker(string fileName, int fileSize = MemoryFileConnectionUtility._1MOSize )
         {
+            SetWithNameAndSize( fileName,  fileSize);
+        }
+
+        public void SetWithNameAndSize(string fileName, int fileSize) {
+
             m_filenameLock = fileName + "_Locker";
             m_filenameValue = fileName + "_Value";
+            if (m_locker != null) m_locker.Dispose();
             m_locker = MemoryMappedFile.CreateOrOpen(m_filenameLock, LOCKSIZE);
-            m_memoryFile = new TargetMemoryFileWithNoMutex(new TargetMemoryFileInitation() { m_fileName = fileName + "_Value", m_maxMemorySize = fileSize });
+            if (m_memoryFile != null)
+                m_memoryFile.Dispose();
+            m_paramsInit = new TargetMemoryFileInitation() { m_fileName = fileName + "_Value", m_maxMemorySize = fileSize };
+            m_memoryFile = new MemoryFileConnectionNoMutex(m_paramsInit);
         }
+
+        public void SetName(string name)
+        {
+            SetWithNameAndSize(name, m_paramsInit.m_maxMemorySize);
+        }
+
+        public void SetMemorySize(int sizeInBit)
+        {
+            SetWithNameAndSize(m_paramsInit.m_fileName, sizeInBit);
+        }
+        public void SetMemorySizeTo1MO()
+        {
+                SetMemorySize(MemoryFileConnectionUtility._1MOSize);
+        }
+
+        public void SetMemorySizeTo1KO()
+            {
+                SetMemorySize(MemoryFileConnectionUtility._1KOSize);
+            }
+
 
         public static string P_lockTextLock = "1";
         public static string P_lockTextUnlock = "";
@@ -123,14 +153,14 @@ namespace MemoryFileConnectionUtility
 
 
 
-        public void ResetMemory()
+        public void ResetToEmpty()
         {
-            WaitUntilLockerAllowIt(MutexResetMemory);
+            WaitUntilLockerAllowIt(MutexResetToEmpty);
 
         }
-        private void MutexResetMemory()
+        private void MutexResetToEmpty()
         {
-            m_memoryFile.ResetMemory();
+            m_memoryFile.ResetToEmpty();
         }
 
 
@@ -161,34 +191,34 @@ namespace MemoryFileConnectionUtility
         }
 
 
-        public void SetText( string text)
+        public void SetAsText( string text)
         {
             WaitUntilLockerAllowIt(() =>
             {
-                MutexSetText( text);
+                MutexSetAsText( text);
             });
 
         }
-        private void MutexSetText( string text)
+        private void MutexSetAsText( string text)
         {
-            m_memoryFile.SetText( text);
+            m_memoryFile.SetAsText( text);
         }
 
-        public void TextRecovering(out string readText,  bool removeContentAfter )
+        public void GetAsText(out string readText,  bool removeContentAfter )
         {
 
             string textFound = "";
             WaitUntilLockerAllowIt(() =>
             {
-                MutexTextRecovering(out textFound,  removeContentAfter);
+                MutexGetAsText(out textFound,  removeContentAfter);
             });
             readText = textFound;
 
         }
 
-        private void MutexTextRecovering(out string readText,  bool directremove = true)
+        private void MutexGetAsText(out string readText,  bool removeContentAfter = false)
         {
-            m_memoryFile.TextRecovering(out readText,  directremove);
+            m_memoryFile.GetAsText(out readText,  removeContentAfter);
         }
 
 
@@ -207,21 +237,26 @@ namespace MemoryFileConnectionUtility
         }
 
 
-        public void BytesRecovering(out byte[] bytes,  bool removeContentAfter )
+        public void GetAsBytes(out byte[] bytes,  bool removeContentAfter )
         {
             byte[] b = new byte[0];
             WaitUntilLockerAllowIt(() =>
             {
-                MutexBytesRecovering(out b,  removeContentAfter);
+                MutexGetAsBytes(out b,  removeContentAfter);
             });
             bytes = b;
 
         }
 
-        private void MutexBytesRecovering(out byte[] bytes,  bool directremove = true)
+        private void MutexGetAsBytes(out byte[] bytes,  bool removeContentAfter = false)
         {
-            m_memoryFile.BytesRecovering(out bytes,  directremove);
+            m_memoryFile.GetAsBytes(out bytes,  removeContentAfter);
         }
 
+        public void Dispose()
+        {
+            m_locker.Dispose();
+            m_memoryFile.Dispose();
+        }
     }
 }
