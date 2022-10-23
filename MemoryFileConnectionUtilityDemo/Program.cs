@@ -15,13 +15,11 @@ namespace MemoryFileConnectionUtilityDemo
 
         static void Main(string[] args)
         {
-            int mode = 4;
+            int mode = 3;
 
             if (mode == 0)
             {
-
                 string toPush = "Hello World !";
-
                 IMemoryFileConnectionSetGet connectionPush = new MemoryFileConnectionWithMutexLocker("Test1", 100000);
                 IMemoryFileConnectionSetGet connectionRecovert = new MemoryFileConnectionWithMutexLocker("Test1", 100000);
 
@@ -58,6 +56,19 @@ namespace MemoryFileConnectionUtilityDemo
                 //(new Thread(new ThreadStart(() => PushRandomText(1)))).Start();
                 //(new Thread(new ThreadStart(() => PushRandomText(50)))).Start();
                 (new Thread(new ThreadStart(() => ReadRandomTextMutex(1)))).Start();
+            }
+            else if (mode == 3)
+            {
+                MemoryFileConnectionFacade.CreateConnection(MemoryFileConnectionType.MemoryFileLocker,
+                    "OMICommandLines", out IMemoryFileConnectionSetGet connect, 1000000);
+                while (true)
+                {
+
+                    string toPush = Console.ReadLine();
+                    connect.AppendTextAtEnd(toPush);
+                    Console.WriteLine("PUSH|",toPush);
+                }
+
             }
             else if (mode == 4)
             {
