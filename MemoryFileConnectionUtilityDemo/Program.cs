@@ -11,8 +11,6 @@ namespace MemoryFileConnectionUtilityDemo
 {
     class Program
     {
-
-
         static void Main(string[] args)
         {
             int mode = 3;

@@ -6,7 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MemoryFileConnectionUtilityNoMutex\MemoryFileConnectionUtilityNoMutex.csproj" />
+    <Reference Include="MemoryFileConnectionUtility">
+      <HintPath>..\Release\MemoryFileConnectionUtility.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
